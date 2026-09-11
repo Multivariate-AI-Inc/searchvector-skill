@@ -1,0 +1,4 @@
+interface:
+  display_name: "SearchVector API"
+  short_description: "Find and call SearchVector API endpoints"
+  default_prompt: "Use $searchvector-api to find the right SearchVector API endpoint, inspect its schema, and call it safely if needed."

@@ -1,6 +1,6 @@
 # SearchVector API — cms
 
-Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 34 endpoints.
+Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 33 endpoints.
 
 ### POST /api/projects/{project_id}/wordpress/fetch-post-ids/
 `projects_wordpress_fetch_post_ids_create` — Fetch WordPress post IDs
@@ -211,13 +211,6 @@ Update WordPress post/page title manually using post ID. Set update_date=true to
   - update_date (boolean) — Set to true to update post date to today's date
 - Auth: JWT/Token/Cookie
 - Returns: 200 ManualWordPressTitleUpdateResponse
-
-### GET /api/wordpress/post-types/{project_id}/
-`wordpress_post_types_retrieve` — Get WordPress Post Types
-Fetch all available content types from connected WordPress site, filtering out system/internal types.
-- Path: project_id* (integer)
-- Auth: JWT/Token/Cookie
-- Returns: 200 any | 403 any | 404 any
 
 ### POST /api/wordpress/posts/create/
 `wordpress_posts_create_create` — Create WordPress Post
