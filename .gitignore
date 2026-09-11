@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.pycache/
+__pycache__/
+*.py[cod]
+openapi.yaml
+openapi.json
+searchvector-openapi.yaml
+searchvector-openapi.json

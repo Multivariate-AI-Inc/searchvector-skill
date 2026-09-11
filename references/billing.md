@@ -93,7 +93,6 @@ Retrieve paginated usage history for authenticated user with optional filters
 - keywords_limit* (integer) [read-only] — Get keywords limit (custom plan override or standard).
 - features* (object) [read-only] — Get features (custom plan overrides merged with standard).
 - is_custom_plan* (boolean) [read-only] — Check if user has active custom plan.
-- is_internal_user* (boolean) [read-only] — Check if user is classified as internal.
 - custom_plan_expires_at* (string(date-time)) [read-only] — Get custom plan expiration date (if applicable).
 - trial_ends_at (string(date-time))
 - subscription_ends_at (string(date-time))

@@ -80,6 +80,7 @@ Partially update project information. Only members with edit permissions can upd
   - brand_regex (string) — Regex pattern for brand filtering (e.g., 'nike|adidas')
   - default_country (string) — Default country code for this project (e.g., 'us', 'in', 'uk')
   - is_active (boolean)
+  - competitor_domains (array<string>) — Replace project competitors with this normalized domain list.
 - Auth: JWT/Token/Cookie
 - Returns: 200 ProjectDetail
 
@@ -94,6 +95,7 @@ Update project information. Only members with edit permissions can update.
   - brand_regex (string) — Regex pattern for brand filtering (e.g., 'nike|adidas')
   - default_country (string) — Default country code for this project (e.g., 'us', 'in', 'uk')
   - is_active (boolean)
+  - competitor_domains (array<string>) — Replace project competitors with this normalized domain list.
 - Auth: JWT/Token/Cookie
 - Returns: 200 ProjectDetail
 
@@ -308,7 +310,7 @@ Resend invitation email for a pending membership. Generates new token and extend
 - competitors* (array<ProjectCompetitorSummary>) [read-only]
 - integrations* (array<ProjectIntegration>) [read-only]
 - active_integrations* (object) [read-only]
-- metrics* (object) [read-only]
+- tracked_keyword_count* (integer) [read-only]
 - my_role* (any?) [read-only]
 - created_at* (string(date-time)) [read-only]
 - updated_at* (string(date-time)) [read-only]
@@ -345,7 +347,7 @@ Resend invitation email for a pending membership. Generates new token and extend
 - competitors* (array<ProjectCompetitorSummary>) [read-only]
 - integration_count* (integer) [read-only]
 - active_integrations* (object) [read-only]
-- metrics* (object) [read-only]
+- tracked_keyword_count* (integer) [read-only]
 - my_role* (any?) [read-only]
 - created_at* (string(date-time)) [read-only]
 - updated_at* (string(date-time)) [read-only]

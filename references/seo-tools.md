@@ -1,6 +1,6 @@
 # SearchVector API — seo-tools
 
-Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 34 endpoints.
+Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 42 endpoints.
 
 ### GET /api/rank-tracker/competitors/
 `rank_tracker_competitors_list` — List or create project competitors
@@ -14,16 +14,29 @@ GET: list project competitors. POST requires owner or admin access. POST is limi
 - Body (required): ProjectCompetitorRequest
   - project* (integer)
   - domain* (string)
-  - source (enum(rank_tracker|project_settings|competitor_finder))
+  - global_traffic (integer)
+  - priority (integer)
 - Auth: JWT/Token/Cookie
 - Returns: 200 array<ProjectCompetitor> | 201 ProjectCompetitor | 402 | 403
 
 ### DELETE /api/rank-tracker/competitors/{competitor_id}/
-`rank_tracker_competitors_destroy` — Delete a project competitor
-Deletes a project competitor. Owner/admin access required.
+`rank_tracker_competitors_destroy` — Update or delete a project competitor
+PATCH updates a project competitor. DELETE removes it. Owner/admin access required.
 - Path: competitor_id* (integer)
 - Auth: JWT/Token/Cookie
-- Returns: 204 | 403
+- Returns: 200 ProjectCompetitor | 204 | 400 | 403
+
+### PATCH /api/rank-tracker/competitors/{competitor_id}/
+`rank_tracker_competitors_partial_update` — Update or delete a project competitor
+PATCH updates a project competitor. DELETE removes it. Owner/admin access required.
+- Path: competitor_id* (integer)
+- Body: PatchedProjectCompetitorRequest
+  - project (integer)
+  - domain (string)
+  - global_traffic (integer)
+  - priority (integer)
+- Auth: JWT/Token/Cookie
+- Returns: 200 ProjectCompetitor | 204 | 400 | 403
 
 ### POST /api/rank-tracker/keyword-score/
 `rank_tracker_keyword_score_create` — Calculate keyword difficulty scores from stored SERP data
@@ -89,6 +102,21 @@ Returns day-wise snapshots for the project's own domain. For each available scra
 - Auth: JWT/Token/Cookie
 - Returns: 200
 
+### GET /api/tools/advertise-urls/
+`tools_advertise_urls_list` — List advertise URLs
+Returns advertise URLs. Use `search` to filter by URL text and `page_size` to request larger pages, up to 1000 rows.
+- Query: ordering (string) — Order by url, created_at, or updated_at. Prefix with - for descending.; page (integer) — Page number.; page_size (integer) — Number of rows per page. Maximum 1000.; search (string) — Search text matched against URL.
+- Auth: JWT
+- Returns: 200 object | 401
+
+### POST /api/tools/advertiser-competitors/
+`tools_advertiser_competitors_create` — Get advertiser competitor domains
+Returns advertiser domains that rank for keywords also ranking for the requested domain.
+- Body (required): AdvertiserCompetitorsRequestRequest
+  - domain* (string)
+- Auth: JWT/Token/Cookie
+- Returns: 200 AdvertiserCompetitorsResponse | 400 | 402 | 500 | 503
+
 ### POST /api/tools/competitor-domains/
 `tools_competitor_domains_create` — Find top competitor domains based on keyword overlap (Jaccard similarity)
 Analyze your domain and discover top competitors based on keyword overlap using Jaccard similarity. Returns competitor domains with shared keyword metrics, overlap percentage, and unique keyword counts. **Features:** - …
@@ -120,21 +148,11 @@ Inspect multiple URLs for indexing, crawl, and mobile signals. **What this endpo
 - Auth: JWT/Token/Cookie
 - Returns: 200 object | 400 | 401 | 403 | 404 | 429 | 500
 
-### POST /api/tools/metrics/
-`tools_metrics_create` — Get keyword metrics
-Fetch search volume and keyword metrics. **What this endpoint does** - Normalizes country and language to supported codes - Caches successful responses for repeat requests - Charges credits per keyword **Input** - `keyw…
-- Body: object
-  - keywords* (array<string>) — List of keywords to get metrics for
-  - country (string) — Country code (e.g., 'in', 'us', 'global')
-  - language (string) — Language code (e.g., 'en', 'hi', 'es')
-- Auth: JWT/Token/Cookie
-- Returns: 200 KeywordMetricsOutput | 400 | 500
-
 ### POST /api/tools/metrics/v2/
 `tools_metrics_v2_create` — Get keyword metrics v2
 Fetch keyword metrics with optional global support when country is omitted. **What this endpoint does** - Validates keyword list and optional location fields - Supports country-specific or global requests - Returns the …
 - Body: object
-  - keywords* (array<string>) — List of keywords to get metrics for
+  - keywords* (array<string>) — List of keywords to get metrics for. Maximum 10000 keywords per request.
   - country (string) — Country code (e.g., 'in', 'us'). Omit for global data.
   - language (string) — Language code (e.g., 'en', 'hi')
 - Auth: JWT/Token/Cookie
@@ -160,7 +178,7 @@ Fetches SERP data and calculates keyword difficulty scores based on top 10 resul
 
 ### POST /api/tools/serp/google/
 `tools_serp_google_create` — Google SERP Results
-Fetch search results for a keyword. **What this endpoint does** - Returns organic search results for a keyword - Supports country, language, device, and location inputs - Uses cache when possible - Charges credits only …
+Fetch search results for a keyword. **What this endpoint does** - Returns organic search results for a keyword - Supports country, language, device, and location inputs - Uses cache when possible - Uses `SERP_PROVIDER` …
 - Body (required): SERPInputRequest
   - keyword* (string) — Search keyword
   - country (string) — Country code (e.g., 'us', 'uk', 'in')
@@ -197,7 +215,7 @@ Extract page URLs and last modified dates from a sitemap file. **What this endpo
   - fresh (boolean) — Force real-time fetch. Default: false
   - freshness_window_in_days (integer) — Cache validity in days. Accept cached data if age < this value. Default: 30 days. Example: 720 for 2 years
 - Auth: JWT/Token/Cookie
-- Returns: 200 SitemapParseResponse
+- Returns: 200 SitemapParseResponse | 400 | 402 | 404 | 500
 
 ### POST /api/tools/suggestions/
 `tools_suggestions_create` — Get bulk keyword suggestions
@@ -231,22 +249,23 @@ Fetch the page title and meta description for a URL. **What this endpoint does**
   - url (string)
   - urls (array<string>)
 - Auth: JWT/Token/Cookie
-- Returns: 200 object | 400 | 402 | 500
+- Returns: 200 object | 400 | 402 | 500 | 502
 
 ### POST /api/tools/topic-gap/
 `tools_topic_gap_create` — Advanced Topic Gap Analysis
-Compare a primary site against competitor data to surface missing and weak topics. **What this endpoint does** - Analyzes topic overlap between your input lists - Returns gaps and weaker areas that need coverage - Suppo…
+Compare a primary site against competitor data to surface missing and weak topics. **What this endpoint does** - Analyzes topic overlap between your inputs - Returns gaps and weaker areas that need coverage - Supports d…
 - Body (required): UnifiedEmbeddingInputRequest
-  - self_data* (array<string>) — Primary domains/data list
-  - competitor_data* (array<string>) — Competitor domains/data list
+  - self_data* (any) — Primary data as a string or non-empty list. Supports domain, page URL, sitemap URL, or keyword input.
+  - competitor_data* (any) — Competitor data as a string or non-empty list. Supports domain, page URL, sitemap URL, or keyword input.
   - use_cache (boolean) — Whether upstream service should use cache
+  - non_zero_volume_keyword (boolean) — Whether upstream service should return only keywords with non-zero volume
 - Auth: JWT/Token/Cookie
-- Returns: 200 TopicGapResponse | 400 | 402 | 500 | 502
+- Returns: 200 TopicGapResponse | 400 | 402 | 500
 
 ### GET /api/tools/url-comparison/
 `tools_url_comparison_list` — List URL comparisons
 Return paginated URL comparison records owned by the authenticated user. This endpoint returns up to 1000 records per page. Use project_id to filter records by project. If no project filter is sent, all records owned by…
-- Query: page (integer) — A page number within the paginated result set.; project_id (integer) — Optional project ID filter. Returns records linked to this project.
+- Query: fields (string) — Comma-separated response fields for list results. Example: id,url,organic_traffic_goal,pr…; page (integer) — A page number within the paginated result set.; project_id (integer) — Optional project ID filter. Returns records linked to this project.
 - Auth: JWT/Token/Cookie
 - Returns: 200 Paginated<UrlComparisonListResponse>
 
@@ -260,9 +279,9 @@ Create URL comparison records. This API charges 1 credit. Send a single object t
   - direct_competitor (array<string>) — Optional direct competitor URLs. Send up to 20 URLs.
   - indirect_competitor (array<string>) — Optional indirect competitor URLs. Send up to 20 URLs.
   - slug_keyword (string) — Optional. If missing, backend generates it from the last URL segment.
-  - project_id (integer) — Optional project ID. Project lookup is limited to authenticated user's projects.
+  - project_id* (integer) — Project ID. Project lookup is limited to authenticated user's projects.
   - country (string) — Optional country code. Priority is project country, then this country, then US.
-  - volume (boolean) — When true, fetch country and global slug keyword volume.
+  - volume (boolean) — When true, fetch country and global slug keyword volume. Defaults to false when omitted.
 - Auth: JWT/Token/Cookie
 - Returns: 201 UrlComparisonRead | 400 | 402 | 500
 
@@ -273,9 +292,16 @@ Hard delete one URL comparison record by ID. Delete does not charge credits.
 - Auth: JWT/Token/Cookie
 - Returns: 200
 
+### GET /api/tools/url-comparison/{id}/
+`tools_url_comparison_retrieve` — Get URL comparison
+Return one project-scoped URL comparison record by ID. Project owner/admin/viewer users with active project access can retrieve it. Users without active project access receive 404.
+- Path: id* (integer) — A unique integer value identifying this URL Comparison.
+- Auth: JWT/Token/Cookie
+- Returns: 200 UrlComparisonRead | 404
+
 ### PUT /api/tools/url-comparison/{id}/
 `tools_url_comparison_update` — Update URL comparison
-Fully update a URL comparison record by ID. This API charges 1 credit. Required fields: url, organic_traffic_goal. Optional fields: last_30_days_impression, direct_competitor, indirect_competitor, slug_keyword, project_…
+Fully update a URL comparison record by ID. This API charges 1 credit. Required fields: url, organic_traffic_goal, project_id. Optional fields: last_30_days_impression, direct_competitor, indirect_competitor, slug_keywo…
 - Path: id* (integer) — A unique integer value identifying this URL Comparison.
 - Body (required): UrlComparisonWriteRequest
   - url* (string) — Target page URL. If scheme is missing, backend adds https:// automatically.
@@ -284,21 +310,37 @@ Fully update a URL comparison record by ID. This API charges 1 credit. Required 
   - direct_competitor (array<string>) — Optional direct competitor URLs. Send up to 20 URLs.
   - indirect_competitor (array<string>) — Optional indirect competitor URLs. Send up to 20 URLs.
   - slug_keyword (string) — Optional. If missing, backend generates it from the last URL segment.
-  - project_id (integer) — Optional project ID. Project lookup is limited to authenticated user's projects.
+  - project_id* (integer) — Project ID. Project lookup is limited to authenticated user's projects.
   - country (string) — Optional country code. Priority is project country, then this country, then US.
-  - volume (boolean) — When true, fetch country and global slug keyword volume.
+  - volume (boolean) — When true, fetch country and global slug keyword volume. Defaults to false when omitted.
 - Auth: JWT/Token/Cookie
 - Returns: 200 UrlComparisonRead | 400 | 402 | 500
 
-### POST /api/tools/url-keywords/
-`tools_url_keywords_create` — Get keywords for multiple URLs
-Get the unique ranking keywords across one or more URLs or domains. **What this endpoint does** - Finds keywords that rank for the provided URLs or domains - Removes duplicates across input URLs - Picks the best rank wh…
-- Body (required): URLKeywordsInputRequest
-  - urls* (array<string>) — List of URLs/domains to fetch keywords for (max 50)
-  - mode (any) — Mode: 'domain' for domain-level match (all subdomains/pages), 'page' for exact page/path match * `domain` - domain * `p…
-  - page (integer) — Page number for pagination (default: 1). Free users: page 1 only. Paid users: page 1 returns 5000 rows, page 2+ returns…
+### POST /api/tools/us-vs-competitor-analysis/
+`tools_us_vs_competitor_analysis_create` — Start us vs competitor analysis
+Queue a report job that compares one self URL against up to three competitor URLs. When fresh=false and the same normalized report payload is submitted again within 24 hours, the API returns the existing queued, running…
+- Body (required): UsVsCompetitorAnalysisRequestRequest
+  - self_url* (string)
+  - competitor_urls* (array<string>)
+  - country (string)
+  - fresh (boolean)
+  - include_pagespeed (boolean)
 - Auth: JWT/Token/Cookie
-- Returns: 200 URLKeywordsOutput | 402 | 503
+- Returns: 200 UsVsCompetitorAnalysisStartResponse | 400 | 402 | 500
+
+### GET /api/tools/us-vs-competitor-analysis/jobs/history/
+`tools_us_vs_competitor_analysis_jobs_history_retrieve` — List us vs competitor analysis jobs
+List the authenticated user's us vs competitor analysis jobs. The response is lightweight and does not include the full report result. Use the job status endpoint to load a selected job's full result.
+- Query: end_date (string(date)); limit (integer); offset (integer); start_date (string(date))
+- Auth: JWT/Token/Cookie
+- Returns: 200 UsVsCompetitorAnalysisJobHistoryResponse | 400 | 500
+
+### GET /api/tools/us-vs-competitor-analysis/jobs/{job_id}/
+`tools_us_vs_competitor_analysis_jobs_retrieve` — Get us vs competitor analysis job
+Return the queued, running, completed, or failed status for a us vs competitor analysis job. Completed results include the frontend table and omit the raw per-URL results array.
+- Path: job_id* (integer)
+- Auth: JWT/Token/Cookie
+- Returns: 200 UsVsCompetitorAnalysisJobStatusResponse | 404
 
 ### GET /api/tools/youtube-channel-data/
 `tools_youtube_channel_data_retrieve` — Get channel videos
@@ -323,7 +365,38 @@ Fetch detailed information about a video. **What this endpoint does** - Returns 
 - Auth: JWT/Token/Cookie
 - Returns: 200 object | 400 | 402 | 500
 
+### POST /api/v2/topic-gap/
+`v2_topic_gap_create` — Advanced Topic Gap Analysis
+Compare a primary site against competitor data to surface missing and weak topics. **What this endpoint does** - Analyzes topic overlap between your inputs - Returns gaps and weaker areas that need coverage - Supports d…
+- Body (required): UnifiedEmbeddingInputRequest
+  - self_data* (any) — Primary data as a string or non-empty list. Supports domain, page URL, sitemap URL, or keyword input.
+  - competitor_data* (any) — Competitor data as a string or non-empty list. Supports domain, page URL, sitemap URL, or keyword input.
+  - use_cache (boolean) — Whether upstream service should use cache
+  - non_zero_volume_keyword (boolean) — Whether upstream service should return only keywords with non-zero volume
+- Auth: JWT/Token/Cookie
+- Returns: 200 TopicGapResponse | 400 | 402 | 500
+
+### GET /api/v2/topic-gap/jobs/history/
+`v2_topic_gap_jobs_history_retrieve` — List Topic Gap jobs
+Returns previous Topic Gap reports for the authenticated user.
+- Query: limit (integer) — Number of jobs to return. Default 20, max 100.; offset (integer) — Number of jobs to skip. Default 0.
+- Auth: JWT/Token/Cookie
+- Returns: 200 TopicGapJobHistoryResponse | 401 | 500
+
+### GET /api/v2/topic-gap/jobs/{job_id}/
+`v2_topic_gap_jobs_retrieve` — Get Topic Gap job
+Returns one saved Topic Gap report for the authenticated user. If the saved job is queued or running and has an upstream job id, the backend refreshes its status from the external V2 analyze API before responding.
+- Path: job_id* (integer)
+- Auth: JWT/Token/Cookie
+- Returns: 200 TopicGapJobDetailResponse | 401 | 404 | 500
+
 ## Response schemas
+
+### AdvertiserCompetitorsResponse
+- success* (boolean)
+- domain* (string)
+- total_domains* (integer)
+- items* (array<object>) — Advertiser domains with advertise URLs and shared keyword counts.
 
 ### BulkKeywordSuggestionOutput
 - cached* (boolean)
@@ -383,7 +456,8 @@ Fetch detailed information about a video. **What this endpoint does** - Returns 
 - id* (integer) [read-only]
 - project* (integer)
 - domain* (string)
-- source (enum(rank_tracker|project_settings|competitor_finder))
+- global_traffic (integer)
+- priority (integer)
 - created_at* (string(date-time)) [read-only]
 - updated_at* (string(date-time)) [read-only]
 
@@ -409,23 +483,36 @@ Fetch detailed information about a video. **What this endpoint does** - Returns 
 - credits_charged (string(decimal)) — Credits charged for this operation
 - cached (boolean) — Whether result is from a previous fetch
 
+### TopicGapJobDetailResponse
+- success* (boolean)
+- job_id* (integer)
+- status* (string)
+- self_data* (any)
+- competitor_data* (any)
+- request_payload* (any)
+- result_available* (boolean)
+- result* (any?)
+- error* (string)
+- created_at* (string(date-time))
+- completed_at* (string(date-time)?)
+
+### TopicGapJobHistoryResponse
+- success* (boolean)
+- total* (integer)
+- limit* (integer)
+- offset* (integer)
+- jobs* (array<TopicGapJobSummary>)
+
 ### TopicGapResponse
 - success* (boolean)
-- has_data* (boolean)
+- job_id (integer)
+- status (string)
+- has_data (boolean)
 - message (string?)
 - missing_topics (any)
 - weak_topics (any)
 - total (integer)
-- credits_charged* (number(double))
 - data (any)
-
-### URLKeywordsOutput
-- success* (boolean)
-- total_urls* (integer)
-- total_unique_keywords* (integer)
-- data* (array<URLKeywordsData>)
-- pagination (object)
-- message (string)
 
 ### UrlComparisonListResponse
 - count* (integer)
@@ -449,3 +536,24 @@ Fetch detailed information about a video. **What this endpoint does** - Returns 
 - slug_volume_country (integer?)
 - slug_volume_global (integer?)
 - volume* (boolean)
+
+### UsVsCompetitorAnalysisJobHistoryResponse
+- success* (boolean)
+- total* (integer)
+- limit* (integer)
+- offset* (integer)
+- jobs* (array<UsVsCompetitorAnalysisJobHistoryItem>)
+
+### UsVsCompetitorAnalysisJobStatusResponse
+- success* (boolean)
+- job_id* (integer)
+- status* (string)
+- created_at* (string(date-time))
+- completed_at* (string(date-time)?)
+- result (any?)
+- error (string)
+
+### UsVsCompetitorAnalysisStartResponse
+- success* (boolean)
+- job_id* (integer)
+- status* (string)
