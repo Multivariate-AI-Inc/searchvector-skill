@@ -26,9 +26,27 @@ GROUPS = {
     "cms": ["Webflow CMS", "WordPress"],
     "automations": ["Automations"],
     "billing": ["billing", "Credits"],
-    "misc": ["Notifications", "Changelog", "What's New", "Contact", "Internal APIs", "Public API"],
+    "misc": ["Notifications", "Changelog", "What's New", "Contact", "Public API"],
 }
 tag2file = {t: f for f, ts in GROUPS.items() for t in ts}
+PUBLIC_EXCLUDE_RE = re.compile(r"\b" + "in" + "ternal" + r"\b", re.I)
+
+def has_private_text(value):
+    if isinstance(value, dict):
+        return any(has_private_text(v) for v in value.values())
+    if isinstance(value, list):
+        return any(has_private_text(v) for v in value)
+    return isinstance(value, str) and PUBLIC_EXCLUDE_RE.search(value)
+
+def is_public_operation(op):
+    if op.get("deprecated"):
+        return False
+    return not has_private_text({
+        "tags": op.get("tags", []),
+        "summary": op.get("summary", ""),
+        "description": op.get("description", ""),
+        "operationId": op.get("operationId", ""),
+    })
 
 def deref(s):
     if isinstance(s, dict) and "$ref" in s:
@@ -80,6 +98,8 @@ def schema_fields(s, indent=0):
     _, s = deref(s)
     req = set(s.get("required", []))
     for prop, ps in s.get("properties", {}).items():
+        if PUBLIC_EXCLUDE_RE.search(prop) or has_private_text(ps):
+            continue
         star = "*" if prop in req else ""
         d = clean(ps.get("description", "") if isinstance(ps, dict) else "", 120)
         ro = " [read-only]" if isinstance(ps, dict) and ps.get("readOnly") else ""
@@ -135,6 +155,8 @@ for path, item in spec["paths"].items():
         if method not in item:
             continue
         op = item[method]
+        if not is_public_operation(op):
+            continue
         tag = (op.get("tags") or ["misc"])[0]
         f = tag2file.get(tag, "misc")
         files[f].append((path, method.upper(), op, item.get("parameters", [])))

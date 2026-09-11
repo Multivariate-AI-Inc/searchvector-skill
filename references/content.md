@@ -1,6 +1,6 @@
 # SearchVector API — content
 
-Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 21 endpoints.
+Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 23 endpoints.
 
 ### GET /api/article-settings/
 `article_settings_retrieve` — Get user article settings
@@ -202,7 +202,7 @@ Update article fields (content, title, meta, tags, category, etc.)
 ### GET /api/content-calendar/
 `content_calendar_list` — List accessible content calendar rows
 List content calendar rows from active projects shared with the authenticated user. Page types: - Product or Service: product_or_service - Programmatic or Tool Page: programmatic_or_tool_page - Article or Blog: article_…
-- Query: assigned_to (integer) — Filter by assigned user ID; ordering (enum(-created_at|-planned_publishing_date|created_at|planned_publishing_date)) — Order by created_at or planned_publishing_date; page (integer) — A page number within the paginated result set.; page_type (enum(article_or_blog|product_or_service|programmatic_or_tool_page)) — Filter by page type. Page types: - Product or Service: product_or_service - Programmatic …; planned_from (string(date)) — Filter rows planned on or after this date; planned_to (string(date)) — Filter rows planned on or before this date; project (integer) — Filter by project ID; published (boolean) — Filter published or unpublished rows; search (string) — Search topic or slug
+- Query: assigned_to (integer) — Filter by assigned user ID; fields (string) — Comma-separated response fields for list results. Example: slug,planned_publishing_date; ordering (enum(-created_at|-planned_publishing_date|created_at|planned_publishing_date)) — Order by created_at or planned_publishing_date; page (integer) — A page number within the paginated result set.; page_size (integer) — Number of rows per page. Maximum 500.; page_type (enum(article_or_blog|product_or_service|programmatic_or_tool_page)) — Filter by page type. Page types: - Product or Service: product_or_service - Programmatic …; planned_from (string(date)) — Filter rows planned on or after this date; planned_to (string(date)) — Filter rows planned on or before this date; project (integer) — Filter by project ID; published (boolean) — Filter published or unpublished rows; search (string) — Search topic or slug
 - Auth: JWT/Token/Cookie
 - Returns: 200 Paginated<ContentCalendarPaginatedResponse>
 
@@ -210,13 +210,13 @@ List content calendar rows from active projects shared with the authenticated us
 `projects_content_calendar_list` — List content calendar rows
 List content calendar rows for a project. Any active project member can read rows. Page types: - Product or Service: product_or_service - Programmatic or Tool Page: programmatic_or_tool_page - Article or Blog: article_o…
 - Path: project_pk* (integer) — Project ID
-- Query: assigned_to (integer) — Filter by assigned user ID; ordering (enum(-created_at|-planned_publishing_date|created_at|planned_publishing_date)) — Order by created_at or planned_publishing_date; page (integer) — A page number within the paginated result set.; page_type (enum(article_or_blog|product_or_service|programmatic_or_tool_page)) — Filter by page type. Page types: - Product or Service: product_or_service - Programmatic …; planned_from (string(date)) — Filter rows planned on or after this date; planned_to (string(date)) — Filter rows planned on or before this date; published (boolean) — Filter published or unpublished rows; search (string) — Search topic or slug
+- Query: assigned_to (integer) — Filter by assigned user ID; fields (string) — Comma-separated response fields for list results. Example: slug,planned_publishing_date; ordering (enum(-created_at|-planned_publishing_date|created_at|planned_publishing_date)) — Order by created_at or planned_publishing_date; page (integer) — A page number within the paginated result set.; page_size (integer) — Number of rows per page. Maximum 500.; page_type (enum(article_or_blog|product_or_service|programmatic_or_tool_page)) — Filter by page type. Page types: - Product or Service: product_or_service - Programmatic …; planned_from (string(date)) — Filter rows planned on or after this date; planned_to (string(date)) — Filter rows planned on or before this date; published (boolean) — Filter published or unpublished rows; search (string) — Search topic or slug
 - Auth: JWT/Token/Cookie
 - Returns: 200 Paginated<ContentCalendarPaginatedResponse> | 403 | 404
 
 ### POST /api/projects/{project_pk}/content-calendar/
 `projects_content_calendar_create` — Create content calendar row
-Create a project-scoped content calendar row. Only project owner/admin can create rows. Assigned user is optional. When provided, the user must be an active project member. Page types: - Product or Service: product_or_s…
+Create one or many project-scoped content calendar rows. Send a JSON object for one row or a JSON array for bulk create. Only project owner/admin can create rows. Assigned user is optional. When provided, the user must …
 - Path: project_pk* (integer)
 - Body (required): ContentCalendarWriteRequest
   - slug* (string)
@@ -230,7 +230,22 @@ Create a project-scoped content calendar row. Only project owner/admin can creat
   - assigned_to (integer?) — Optional active project member user ID.
   - page_type* (enum(product_or_service|programmatic_or_tool_page|article_or_blog))
 - Auth: JWT/Token/Cookie
-- Returns: 201 ContentCalendar | 400 | 403 | 409
+- Returns: 201 ContentCalendarCreateResponse | 400 | 402 | 403 | 409
+
+### DELETE /api/projects/{project_pk}/content-calendar/bulk/
+`projects_content_calendar_bulk_destroy` — Bulk delete content calendar rows
+Delete many content calendar rows in this project. Only project owner/admin can delete rows. If any row is invalid, no rows are deleted.
+- Path: project_pk* (integer)
+- Auth: JWT/Token/Cookie
+- Returns: 200 BulkDeleteRowsResponse | 400 | 403 | 409
+
+### PATCH /api/projects/{project_pk}/content-calendar/bulk/
+`projects_content_calendar_bulk_partial_update` — Bulk partially update content calendar rows
+Partially update many content calendar rows in this project. Send a JSON array where each item contains id plus the fields to update. Only project owner/admin can update rows. If any row is invalid, no rows are saved. P…
+- Path: project_pk* (integer)
+- Body: array<object>
+- Auth: JWT/Token/Cookie
+- Returns: 200 ContentCalendarBulkPatchResponse | 400 | 403 | 409
 
 ### DELETE /api/projects/{project_pk}/content-calendar/{id}/
 `projects_content_calendar_destroy` — Delete content calendar row
@@ -371,6 +386,10 @@ Update a content calendar row. Only project owner/admin can update rows. Assigne
 - slug (string?)
 - project_id (integer?)
 
+### BulkDeleteRowsResponse
+- deleted* (integer) — Number of rows deleted.
+- ids* (array<integer>) — Row IDs deleted by this request.
+
 ### ContentCalendar
 - id* (integer) [read-only]
 - project* (integer) [read-only]
@@ -393,6 +412,13 @@ Update a content calendar row. Only project owner/admin can update rows. Assigne
 - created_by_name* (string) [read-only]
 - created_at* (string(date-time)) [read-only]
 - updated_at* (string(date-time)) [read-only]
+
+### ContentCalendarBulkPatchResponse
+- updated* (integer)
+- results* (array<ContentCalendar>)
+
+### ContentCalendarCreateResponse
+- (ContentCalendar | ContentCalendarBulkCreateResponse)
 
 ### ContentCalendarPaginatedResponse
 - count* (integer)

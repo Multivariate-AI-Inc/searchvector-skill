@@ -1,6 +1,6 @@
 # SearchVector API — google-ads
 
-Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 20 endpoints.
+Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 21 endpoints.
 
 ### GET /api/tools/google-ads/accessible-accounts/
 `tools_google_ads_accessible_accounts_retrieve` — List Accessible Google Ads Accounts
@@ -64,14 +64,15 @@ Create or update a shared campaign automation entry. Users who connected the sam
 
 ### POST /api/tools/google-ads/campaigns/performance/
 `tools_google_ads_campaigns_performance_create` — Campaign Performance Dashboard
-Get performance metrics for campaigns: impressions, clicks, CTR, cost, conversions
+Get Google Ads campaign performance metrics including budget, serving status, bidding strategy, cost, and conversion values. Campaign rows also include any extra GAQL fields selected in the active campaign performance t…
 - Body (required): CampaignPerformanceInputRequest
   - account_id* (integer) — Google Ads Account ID
   - date_from* (string(date)) — Start date (YYYY-MM-DD or ISO 8601)
   - date_to* (string(date)) — End date (YYYY-MM-DD or ISO 8601)
   - campaign_ids (array<integer>) — Optional: Filter by specific campaign IDs
+  - cache (boolean) — Use cached data when available. Set false to always fetch fresh Google Ads campaign performance data.
 - Auth: JWT/Token/Cookie
-- Returns: 200 object
+- Returns: 200 CampaignPerformanceResponse
 
 ### POST /api/tools/google-ads/campaigns/performance/auto-bid-tool/
 `tools_google_ads_campaigns_performance_auto_bid_tool_create` — Auto Bid Tool - UAC Campaign Performance
@@ -129,6 +130,9 @@ Execute custom GAQL query templates with dynamic parameters (campaign_id, date r
   - campaign_id (string) — Google Ads Campaign ID (optional - omit to get all campaigns)
   - date_from* (string(date)) — Start date (YYYY-MM-DD or ISO 8601)
   - date_to* (string(date)) — End date (YYYY-MM-DD or ISO 8601)
+  - cache (boolean) — Use cached data when available. Set false to always fetch fresh Google Ads data.
+  - limit (integer) — Maximum number of keyword rows to return (1-5000).
+  - min_impressions (integer) — Minimum impressions for search-term rows.
   - kw_min_click (integer) — Minimum clicks for keyword queries (default: 5)
   - st_min_click (integer) — Minimum clicks for search term queries (default: 3)
   - st_budget_leak_min_click (integer) — Minimum clicks for budget leak search term queries (default: 5)
@@ -196,6 +200,13 @@ Fetch all child accounts under a Manager (MCC) Google Ads account
 - Auth: JWT/Token/Cookie
 - Returns: 200 object
 
+### GET /api/tools/google-ads/mutate/logs/
+`tools_google_ads_mutate_logs_retrieve` — List Google Ads mutate logs
+Return Google Ads mutate actions performed by the authenticated user. Logs belonging to other users are never included.
+- Query: created_from (string(date)) — Include logs created on or after this date (YYYY-MM-DD).; created_to (string(date)) — Include logs created on or before this date (YYYY-MM-DD).; page (integer) — Page number. Default: 1.; page_size (integer) — Rows per page. Default: 20, maximum: 100.; status (enum(failed|success)) — Filter logs by execution status.
+- Auth: JWT/Token/Cookie
+- Returns: 200 | 400 | 401 | 403
+
 ### POST /api/tools/google-ads/search-terms/
 `tools_google_ads_search_terms_create` — Search Terms Analysis
 Get actual user search queries that triggered your ads. Find negative keywords and new opportunities.
@@ -232,6 +243,13 @@ Get all search terms across all campaigns for an account. No campaign filter req
 
 ### CampaignAutomationListResponse
 - campaigns* (array<CampaignAutomationItem>) — List of campaigns with automation status
+
+### CampaignPerformanceResponse
+- campaigns* (array<CampaignPerformanceRow>)
+- total_campaigns* (integer)
+- date_from* (string(date))
+- date_to* (string(date))
+- credits_charged* (number(double))
 
 ### ChangeHistoryResponse
 - changes* (array<ChangeEvent>) — List of change events
