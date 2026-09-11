@@ -1,11 +1,25 @@
 # SearchVector API — gsc-indexing
 
-Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 18 endpoints.
+Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 31 endpoints.
+
+### GET /api/activity-logs/index-inspect/
+`activity_logs_index_inspect_list` — List index inspect activity logs
+Returns paginated Index Inspect activity logs visible to the authenticated user. Users can see their own logs and logs for projects where they are active members. Each row includes success and failed URL lists for that …
+- Query: date (string) — Filter by created date, YYYY-MM-DD; end_date (string) — Filter logs created on or before this date, YYYY-MM-DD; page (integer) — Page number; page_size (integer) — Page size, max 100; project_id (integer) — Filter by project ID; search (string) — Search user, project, property, or URL; source (string) — Filter by source: tool; start_date (string) — Filter logs created on or after this date, YYYY-MM-DD; status (string) — Filter by log status
+- Auth: JWT/Token/Cookie
+- Returns: 200 Paginated<IndexInspectActivityLogList> | 400 | 401
+
+### GET /api/activity-logs/index-inspect/{id}/
+`activity_logs_index_inspect_retrieve` — Get index inspect activity log
+Returns one Index Inspect activity log with per-URL inspection results.
+- Path: id* (integer)
+- Auth: JWT/Token/Cookie
+- Returns: 200 IndexInspectActivityLogDetail | 401 | 404
 
 ### GET /api/activity-logs/indexing/
 `activity_logs_indexing_list` — List indexing activity logs
-Returns paginated Google Indexing activity logs visible to the authenticated user. Users can see their own logs and logs for projects where they are active members.
-- Query: date (string) — Filter by created date, YYYY-MM-DD; page (integer) — Page number; page_size (integer) — Page size, max 100; project_id (integer) — Filter by project ID; search (string) — Search user, project, service account, job, or URL; service_account_id (integer) — Filter by service account ID; source (string) — Filter by source: tool or automation; status (string) — Filter by log status
+Returns paginated Google Indexing activity logs visible to the authenticated user. Users can see their own logs and logs for projects where they are active members. Each row includes success, failed, and skipped URL lis…
+- Query: date (string) — Filter by created date, YYYY-MM-DD; end_date (string) — Filter logs created on or before this date, YYYY-MM-DD; page (integer) — Page number; page_size (integer) — Page size, max 100; project_id (integer) — Filter by project ID; search (string) — Search user, project, service account, job, or URL; service_account_id (integer) — Filter by service account ID; source (string) — Filter by source: tool or automation; start_date (string) — Filter logs created on or after this date, YYYY-MM-DD; status (string) — Filter by log status
 - Auth: JWT/Token/Cookie
 - Returns: 200 Paginated<IndexingActivityLogList> | 400 | 401
 
@@ -15,6 +29,97 @@ Returns one indexing activity log with per-URL submission results.
 - Path: id* (integer)
 - Auth: JWT/Token/Cookie
 - Returns: 200 IndexingActivityLogDetail | 401 | 404
+
+### POST /api/gsc-dashboard/onboarding/websites/
+`gsc_dashboard_onboarding_website_create` — Add GSC dashboard website
+Adds a website to the Advanced GSC dashboard after validating that the authenticated user has project access and the project has an active valid GSC integration.
+- Body (required): AppConsoleWebsiteOnboardingRequestRequest
+  - site_url* (string)
+  - project_id* (integer)
+  - property_type* (string)
+  - service_account_email* (string(email))
+  - site_name* (string)
+- Auth: JWT/Token/Cookie
+- Returns: 200 AppConsoleWebsiteOnboardingResponse | 201 AppConsoleWebsiteOnboardingResponse | 400 GSCDashboardError | 401 GSCDashboardError | 402 GSCDashboardError | 403 GSCDashboardError | 409 GSCDashboardError | 500 GSCDashboardError
+
+### GET /api/gsc-dashboard/websites/
+`gsc_dashboard_websites_list` — List GSC websites
+Get GSC dashboard websites connected to the authenticated user's active SearchVector projects.
+- Query: active (enum(1)) — Set to 1 to return active websites only.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/
+`gsc_dashboard_website_detail` — Get GSC website
+Get GSC dashboard website details by website ID.
+- Path: website_id* (integer) — Website ID
+- Query: project_id* (integer) — Project ID. Required to verify project access and active GSC connection.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/cwv/
+`gsc_dashboard_cwv_retrieve` — Get CWV report
+Get the GSC dashboard Core Web Vitals report.
+- Path: website_id* (integer) — Website ID
+- Query: date (string(date)) — Saved snapshot date in YYYY-MM-DD format.; device (enum(desktop|mobile)) — Device type for Core Web Vitals data.; end_date (string(date)) — Custom chart end date in YYYY-MM-DD format.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.; range (string) — Preset day range from 1d to 180d.; refresh (enum(1)) — Set to 1 to refresh current data before returning rows.; start_date (string(date)) — Custom chart start date in YYYY-MM-DD format.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/cwv/issues/{issue_id}/urls/
+`gsc_dashboard_cwv_issue_urls_list` — List CWV issue URLs
+Get URLs affected by a GSC dashboard Core Web Vitals issue.
+- Path: issue_id* (integer) — Issue ID; website_id* (integer) — Website ID
+- Query: limit (integer) — Number of rows to return.; page (integer) — Page number.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/cwv/{report_id}/issues/{issue_key}/urls/
+`gsc_dashboard_stable_cwv_issue_urls_list` — List stable CWV issue URLs
+Get URLs affected by a GSC dashboard Core Web Vitals issue using the stable report_id and issue_key returned by the parent CWV response.
+- Path: issue_key* (string) — Stable issue key from the parent response. URL-encode this value in the path.; report_id* (integer) — CWV report ID from the parent CWV response.; website_id* (integer) — Website ID
+- Query: limit (integer) — Number of rows to return.; page (integer) — Page number.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/links/
+`gsc_dashboard_links_retrieve` — Get GSC links
+Get the GSC dashboard links report.
+- Path: website_id* (integer) — Website ID
+- Query: limit (integer) — Number of rows to return.; page (integer) — Page number.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.; refresh (enum(1)) — Set to 1 to refresh current data before returning rows.; type (enum(LATEST_LINKS|MORE_SAMPLE_LINKS|TOP_LINKING_SITES|TOP_TARGET_PAGES)) — Link report type.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/messages/
+`gsc_dashboard_messages_retrieve` — Get GSC messages
+Get the GSC dashboard messages report.
+- Path: website_id* (integer) — Website ID
+- Query: limit (integer) — Number of rows to return.; page (integer) — Page number.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.; refresh (enum(1)) — Set to 1 to refresh current data before returning rows.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/page-issues/
+`gsc_dashboard_page_issues_list` — List page issues
+Get GSC dashboard page issue snapshot or chart rows.
+- Path: website_id* (integer) — Website ID
+- Query: date (string(date)) — Saved snapshot date in YYYY-MM-DD format.; end_date (string(date)) — Custom chart end date in YYYY-MM-DD format.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.; range (string) — Preset day range from 1d to 180d.; refresh (enum(1)) — Set to 1 to refresh current data before returning rows.; start_date (string(date)) — Custom chart start date in YYYY-MM-DD format.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/page-issues/{issue_id}/urls/
+`gsc_dashboard_page_issue_urls_list` — List page issue URLs
+Get URLs affected by a GSC dashboard page issue.
+- Path: issue_id* (integer) — Issue ID; website_id* (integer) — Website ID
+- Query: limit (integer) — Number of rows to return.; page (integer) — Page number.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
+
+### GET /api/gsc-dashboard/websites/{website_id}/page-issues/{summary_id}/issues/{issue_key}/urls/
+`gsc_dashboard_stable_page_issue_urls_list` — List stable page issue URLs
+Get URLs affected by a GSC dashboard page issue using the stable summary_id and issue_key returned by the parent page issues response.
+- Path: issue_key* (string) — Stable issue key from the parent response. URL-encode this value in the path.; summary_id* (integer) — Page issue summary ID from the parent page issues response.; website_id* (integer) — Website ID
+- Query: limit (integer) — Number of rows to return.; page (integer) — Page number.; project_id* (integer) — Project ID. Required to verify project access and active GSC connection.
+- Auth: JWT/Token/Cookie
+- Returns: 200 object | 400 GSCDashboardError | 401 | 402 GSCDashboardInsufficientCredits | 403 GSCDashboardError | 404 GSCDashboardError | 409 GSCDashboardError | 500 | 503
 
 ### POST /api/projects/{project_id}/gsc/breakdown/
 `projects_gsc_breakdown_create` — GSC Breakdown with Filtering
@@ -52,7 +157,7 @@ Returns all countries with traffic data, sorted by clicks
 
 ### POST /api/projects/{project_id}/gsc/custom-query/
 `projects_gsc_custom_query_create` — GSC Custom Query (Raw Pass-through)
-Raw pass-through to Google Search Console Search Analytics API. FE sends any GSC parameters and receives the full response.
+Raw pass-through to Google Search Console Search Analytics API. FE sends any GSC parameters and receives the full response. Free plan users can request up to 1000 rows.
 - Path: project_id* (integer) — Project ID
 - Body (required): GSCCustomQueryRequestRequest
   - startDate* (string(date))
@@ -71,13 +176,13 @@ Raw pass-through to Google Search Console Search Analytics API. FE sends any GSC
 `projects_gsc_keywords_retrieve` — Get GSC Keywords Insights
 Returns all queries, cannibalization issues, and opportunities. Use 'sections' parameter to filter response.
 - Path: project_id* (integer) — Project ID
-- Query: end_date* (string(date)) — End date (YYYY-MM-DD); limit (integer) — Number of results (1-5000, default: 100); query_contains (string) — Filter keywords containing this string (e.g., 'gsc'). Filtering happens server-side via G…; sections (string) — Comma-separated sections to include (e.g., 'all_queries' or 'all_queries,opportunities').…; start_date* (string(date)) — Start date (YYYY-MM-DD)
+- Query: end_date* (string(date)) — End date (YYYY-MM-DD); limit (integer) — Number of results (1-5000, default: 100). Free plan users can request up to 1000.; query_contains (string) — Filter keywords containing this string (e.g., 'gsc'). Filtering happens server-side via G…; sections (string) — Comma-separated sections to include (e.g., 'all_queries' or 'all_queries,opportunities').…; start_date* (string(date)) — Start date (YYYY-MM-DD)
 - Auth: JWT/Token/Cookie
 - Returns: 200 object | 400 any | 401 any | 402 any | 403 any | 404 any | 409 any
 
 ### POST /api/projects/{project_id}/gsc/mapping/
 `projects_gsc_mapping_create` — Map Keywords and URLs to GSC Data
-Maps user input keywords to GSC query data and URLs to GSC page data with case-insensitive exact matching. Returns GSC metrics for each keyword or URL, or N/A if not found. Credits charged: 3.00 per non-cached request.
+Maps user input keywords to GSC query data and URLs to GSC page data. URL matching prefers the exact URL sent by the client, then a trailing-slash variant, then www/non-www fallback variants. Returns GSC metrics for eac…
 - Path: project_id* (integer) — Project ID
 - Body: KeywordMappingRequestRequest
   - keywords (array<string>) — List of keywords to map (max 25000)
@@ -85,13 +190,13 @@ Maps user input keywords to GSC query data and URLs to GSC page data with case-i
   - start_date (string(date)) — Start date (default: 30 days ago)
   - end_date (string(date)) — End date (default: yesterday)
 - Auth: JWT/Token/Cookie
-- Returns: 200 KeywordMappingResponse | 400 any | 401 any | 403 any | 404 any | 409 any
+- Returns: 200 KeywordMappingResponse | 400 any | 401 any | 402 any | 403 any | 404 any | 409 any
 
 ### GET /api/projects/{project_id}/gsc/overview/
 `projects_gsc_overview_retrieve` — Get GSC Overview Stats
 Returns aggregated metrics with previous period comparison
 - Path: project_id* (integer) — Project ID
-- Query: end_date* (string(date)) — End date (YYYY-MM-DD); start_date* (string(date)) — Start date (YYYY-MM-DD)
+- Query: country (string) — ISO 3166-1 alpha-3 country code, e.g. IND, USA.; device (string) — Device filter: DESKTOP, MOBILE, or TABLET.; end_date* (string(date)) — End date (YYYY-MM-DD); page_contains (string) — Filter GSC page URLs containing this text.; query_contains (string) — Filter GSC queries containing this text.; search_type (string) — Search type filter: web, image, video, news, discover, googleNews.; start_date* (string(date)) — Start date (YYYY-MM-DD)
 - Auth: JWT/Token/Cookie
 - Returns: 200 OverviewResponse | 400 any | 401 any | 403 any | 404 any | 409 any
 
@@ -110,7 +215,7 @@ Returns GSC data grouped by dimensions and matches Google Search Console API for
 `projects_gsc_pages_retrieve` — Get GSC Pages Insights
 Returns all pages with metrics, distribution stats, and daily fluctuation analysis.
 - Path: project_id* (integer) — Project ID
-- Query: end_date* (string(date)) — End date (YYYY-MM-DD); limit (integer) — Number of results (1-1000, default: 100); sections (string) — Comma-separated list of sections to return: all_pages, distribution, fluctuation (default…; start_date* (string(date)) — Start date (YYYY-MM-DD)
+- Query: end_date* (string(date)) — End date (YYYY-MM-DD); limit (integer) — Number of results (default: 100). Free plan users can request up to 1000.; sections (string) — Comma-separated list of sections to return: all_pages, distribution, fluctuation (default…; start_date* (string(date)) — Start date (YYYY-MM-DD)
 - Auth: JWT/Token/Cookie
 - Returns: 200 object | 400 any | 401 any | 402 any | 403 any | 404 any | 409 any
 
@@ -187,6 +292,11 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 
 ## Response schemas
 
+### AppConsoleWebsiteOnboardingResponse
+- success (boolean)
+- message (string)
+- website (any?)
+
 ### CountriesResponse
 - countries* (array<CountryItem>)
 - total_countries* (integer)
@@ -206,6 +316,15 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 - total_results* (integer)
 - responseAggregationType (string?)
 
+### GSCDashboardError
+- error* (string)
+
+### GSCDashboardInsufficientCredits
+- error* (string)
+- code (string)
+- required (number(double))
+- available (number(double))
+
 ### GSCUrlsFilterResponse
 - total_count* (integer)
 - filters_applied* (object)
@@ -222,6 +341,43 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 - count* (integer) — Total number of service accounts
 - service_accounts* (array<ServiceAccountItem>) — List of service accounts
 
+### IndexInspectActivityLogDetail
+- id* (integer) [read-only]
+- source* (enum(tool))
+- status* (enum(completed|partial_success|failed))
+- user* (any?) [read-only]
+- project* (any?) [read-only]
+- property_url (string)
+- total_urls (integer)
+- success_count (integer)
+- failed_count (integer)
+- credits_charged (string(decimal))
+- error_message (string)
+- metadata (any)
+- completed_at (string(date-time)?)
+- created_at* (string(date-time)) [read-only]
+- success_urls* (array<string(uri)>) [read-only]
+- failed_urls* (array<IndexingActivityFailedURL>) [read-only]
+- url_logs* (array<IndexInspectActivityURLLog>) [read-only]
+
+### IndexInspectActivityLogList
+- id* (integer) [read-only]
+- source* (enum(tool))
+- status* (enum(completed|partial_success|failed))
+- user* (any?) [read-only]
+- project* (any?) [read-only]
+- property_url (string)
+- total_urls (integer)
+- success_count (integer)
+- failed_count (integer)
+- credits_charged (string(decimal))
+- error_message (string)
+- metadata (any)
+- completed_at (string(date-time)?)
+- created_at* (string(date-time)) [read-only]
+- success_urls* (array<string(uri)>) [read-only]
+- failed_urls* (array<IndexingActivityFailedURL>) [read-only]
+
 ### IndexingActivityLogDetail
 - id* (integer) [read-only]
 - job_id (string(uuid)?)
@@ -230,6 +386,7 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 - indexing_type (string)
 - user* (any?) [read-only]
 - project* (any?) [read-only]
+- service_account_id* (integer?) [read-only]
 - service_account_email* (string(email)?)
 - total_urls (integer)
 - success_count (integer)
@@ -244,6 +401,9 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 - error_message (string)
 - completed_at (string(date-time)?)
 - created_at* (string(date-time)) [read-only]
+- success_urls* (array<string(uri)>) [read-only]
+- failed_urls* (array<IndexingActivityFailedURL>) [read-only]
+- skipped_urls* (array<IndexingActivityFailedURL>) [read-only]
 - metadata (any)
 - url_logs* (array<IndexingActivityURLLog>) [read-only]
 
@@ -255,6 +415,7 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 - indexing_type (string)
 - user* (any?) [read-only]
 - project* (any?) [read-only]
+- service_account_id* (integer?) [read-only]
 - service_account_email* (string(email)?)
 - total_urls (integer)
 - success_count (integer)
@@ -269,6 +430,9 @@ Submit one or more URLs to Google Indexing API for indexing or removal.\n\n**Req
 - error_message (string)
 - completed_at (string(date-time)?)
 - created_at* (string(date-time)) [read-only]
+- success_urls* (array<string(uri)>) [read-only]
+- failed_urls* (array<IndexingActivityFailedURL>) [read-only]
+- skipped_urls* (array<IndexingActivityFailedURL>) [read-only]
 
 ### KeywordMappingResponse
 - keywords* (array<KeywordMappingItem>)

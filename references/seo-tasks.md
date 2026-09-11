@@ -6,7 +6,7 @@ Auto-generated from openapi.yaml — do not treat any endpoint/param not listed 
 `projects_seo_tasks_list` — List SEO tasks
 List non-archived SEO tasks visible to project members. Repeating tasks completed in a previous calendar period are lazily reset to todo on read, with subtasks unchecked. Visibility is inherited from project sharing.
 - Path: project_pk* (integer) — Project ID
-- Query: assigned_to (integer) — Filter by assigned user ID; due (enum(none|overdue|today|upcoming)) — Filter by deadline bucket; include_archived (boolean) — Include archived tasks; include_done (boolean) — Include done tasks. Defaults to false.; page (integer) — A page number within the paginated result set.; priority (enum(1|2|3|4)) — Filter by priority; quantity_is_null (boolean) — Only include tasks where quantity is empty; quantity_max (integer) — Maximum quantity; quantity_min (integer) — Minimum quantity; repeat_frequency (enum(daily|monthly|weekly)) — Filter by repeat frequency; repeat_task (boolean) — Filter by repeat task flag; status (enum(awaiting|doing|done|parked|sent_for_review|todo)) — Filter by effective/current status after repeat reset
+- Query: assigned_to (integer) — Filter by assigned user ID; due (enum(none|overdue|today|upcoming)) — Filter by deadline bucket; fields (string) — Comma-separated response fields for list results. Example: task,deadline; include_archived (boolean) — Include archived tasks; include_done (boolean) — Include done tasks. Defaults to false.; page (integer) — A page number within the paginated result set.; page_size (integer) — Number of rows per page. Maximum 500.; priority (enum(1|2|3|4)) — Filter by priority; quantity_is_null (boolean) — Only include tasks where quantity is empty; quantity_max (integer) — Maximum quantity; quantity_min (integer) — Minimum quantity; repeat_frequency (enum(daily|monthly|weekly)) — Filter by repeat frequency; repeat_task (boolean) — Filter by repeat task flag; status (enum(awaiting|doing|done|parked|sent_for_review|todo)) — Filter by effective/current status after repeat reset
 - Auth: JWT/Token/Cookie
 - Returns: 200 Paginated<SEOTask> | 403 | 404
 
@@ -26,7 +26,7 @@ Create a project-scoped SEO task. Only project owner/admin can create tasks. Ass
   - repeat_frequency (enum(daily|weekly|monthly) | enum(None))
   - subtasks (array<SEOTaskNestedSubtaskRequest>)
 - Auth: JWT/Token/Cookie
-- Returns: 201 SEOTask | 400 | 403 | 409
+- Returns: 201 SEOTask | 400 | 402 | 403 | 409
 
 ### GET /api/projects/{project_pk}/seo-tasks/assignees/
 `projects_seo_tasks_assignees_list` — List SEO task assignees
@@ -185,7 +185,7 @@ PUT adds the reaction, DELETE removes it. Both are idempotent — a retried requ
 ### GET /api/seo-tasks/
 `seo_tasks_list` — List accessible SEO tasks
 List SEO tasks from all active projects shared with the authenticated user. Repeating tasks completed in a previous calendar period are lazily reset to todo on read, with subtasks unchecked.
-- Query: assigned_to (integer) — Filter by assigned user ID; due (enum(none|overdue|today|upcoming)) — Filter by deadline bucket; include_archived (boolean) — Include archived tasks; include_done (boolean) — Include done tasks. Defaults to false.; page (integer) — A page number within the paginated result set.; priority (enum(1|2|3|4)) — Filter by priority; quantity_is_null (boolean) — Only include tasks where quantity is empty; quantity_max (integer) — Maximum quantity; quantity_min (integer) — Minimum quantity; repeat_frequency (enum(daily|monthly|weekly)) — Filter by repeat frequency; repeat_task (boolean) — Filter by repeat task flag; status (enum(awaiting|doing|done|parked|sent_for_review|todo)) — Filter by effective/current status after repeat reset
+- Query: assigned_to (integer) — Filter by assigned user ID; due (enum(none|overdue|today|upcoming)) — Filter by deadline bucket; fields (string) — Comma-separated response fields for list results. Example: task,deadline; include_archived (boolean) — Include archived tasks; include_done (boolean) — Include done tasks. Defaults to false.; page (integer) — A page number within the paginated result set.; page_size (integer) — Number of rows per page. Maximum 500.; priority (enum(1|2|3|4)) — Filter by priority; quantity_is_null (boolean) — Only include tasks where quantity is empty; quantity_max (integer) — Maximum quantity; quantity_min (integer) — Minimum quantity; repeat_frequency (enum(daily|monthly|weekly)) — Filter by repeat frequency; repeat_task (boolean) — Filter by repeat task flag; status (enum(awaiting|doing|done|parked|sent_for_review|todo)) — Filter by effective/current status after repeat reset
 - Auth: JWT/Token/Cookie
 - Returns: 200 Paginated<AccessibleSEOTask>
 

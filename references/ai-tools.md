@@ -1,6 +1,6 @@
 # SearchVector API — ai-tools
 
-Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 30 endpoints.
+Auto-generated from openapi.yaml — do not treat any endpoint/param not listed here as existing. 31 endpoints.
 
 ### POST /api/ai/generate-seo-meta/
 `ai_generate_seo_meta_create` — Generate SEO titles/meta descriptions
@@ -47,6 +47,32 @@ Returns stored article extraction snapshots. Use mode=domain to get the latest s
 - Query: domain (string) — Required when mode is domain; mode* (enum(domain|page)) — Snapshot lookup mode; page_url (string) — Required when mode is page
 - Auth: JWT/Token/Cookie
 - Returns: 200 ArticleSnapshotResponse | 400 | 401 | 500
+
+### POST /api/articles/title-meta/
+`articles_title_meta_create` — Get title meta
+Returns title and meta description data. Send exactly one input mode. Use domain to get latest active pages with pagination. Use url to get all title/meta history for one exact URL. Use urls to look up a list of exact U…
+- Query: fields (string) — Comma-separated result row fields to return. Supported fields: url, title, meta_descripti…
+- Body: TitleMetaLookupRequestRequest
+  - urls (array<string(uri)>) — List of exact URLs to look up. Send only one of urls, url, or domain.
+  - url (string(uri)) — Single exact URL. Returns all title and meta history records for this URL.
+  - domain (string(uri)) — Domain URL. Returns latest active page title/meta rows for this domain.
+  - limit (integer) — Domain mode only. Page size. Default 100, maximum 100.
+  - offset (integer) — Domain mode only. Pagination offset. Use next_offset from the previous response.
+  - title (string) — Domain mode only. Filter by title text.
+  - title_regex (string) — Domain mode only. Filter by title regex.
+  - meta_description (string) — Domain mode only. Filter by meta description text.
+  - meta_description_regex (string) — Domain mode only. Filter by meta description regex.
+  - url_filter (string) — Domain mode only. Filter by page URL text. Comma-separated values are supported.
+  - url_exact (string) — Domain mode only. Filter by exact page URL or path. Comma-separated values are supported. Examples: https://example.com…
+  - url_regex (string) — Domain mode only. Filter by page URL regex.
+  - has_title (boolean) — Domain mode only. true returns rows with title, false returns rows without title.
+  - has_meta_description (boolean) — Domain mode only. true returns rows with meta description, false returns rows without meta description.
+  - last_extracted_from (string(date-time)) — Domain mode only. Return rows extracted on or after this datetime.
+  - last_extracted_to (string(date-time)) — Domain mode only. Return rows extracted on or before this datetime.
+  - include_failures (boolean) — Domain mode only. When true, also include failed extraction URLs from FailedArticleExtraction. Failed rows include only…
+  - fields (string) — Optional comma-separated result row fields to return. Supported fields: url, title, meta_description, last_extracted_at…
+- Auth: JWT/Token/Cookie
+- Returns: 200 TitleMetaLookupResponse | 400 | 403 | 500
 
 ### POST /api/keyword-content-score/
 `keyword_content_score_create` — Calculate keyword content scores
@@ -375,3 +401,14 @@ Run a citation search request through the configured AI proxy service and return
 - summary* (PerformanceReportSummary)
 - winner* (any?)
 - variants* (array<VariantPerformance>)
+
+### TitleMetaLookupResponse
+- success* (boolean)
+- total* (integer) — Total rows available for this response mode.
+- limit (integer) — Domain mode only. Current page size.
+- offset (integer) — Domain mode only. Current pagination offset.
+- next_offset (integer?) — Domain mode only. Offset for the next page, or null when no next page exists.
+- has_next (boolean) — Domain mode only. True when another page exists.
+- found_count* (integer) — Number of rows returned in this response.
+- missing_count* (integer) — Number of requested URLs not found where applicable.
+- results* (array<TitleMetaLookupResult>)
