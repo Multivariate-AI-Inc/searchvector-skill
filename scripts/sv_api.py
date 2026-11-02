@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,6 +17,8 @@ import textwrap
 import urllib.error
 import urllib.parse
 import urllib.request
+import warnings
+import webbrowser
 from pathlib import Path
 from typing import Any
 
@@ -193,12 +198,102 @@ def cmd_show(args: argparse.Namespace) -> None:
             print(textwrap.indent(json.dumps(value, indent=2, ensure_ascii=False), "  "))
 
 
+def credentials_path() -> Path:
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "searchvector" / "credentials.json"
+
+
+def launch_setup(no_browser: bool) -> None:
+    command = [sys.executable, str(Path(__file__).resolve()), "setup"]
+    if no_browser:
+        command.append("--no-browser")
+    fallback = "Could not open a user terminal. Run " + shlex.join(command) + " in your own terminal; never paste your token into chat."
+    try:
+        if sys.platform == "darwin":
+            # Pass the shell command as data, never interpolate it into AppleScript.
+            terminal_command = ["env", "XDG_CONFIG_HOME=" + str(credentials_path().parents[1]), *command]
+            script = 'on run argv\n tell application "Terminal"\n activate\n do script (item 1 of argv)\n end tell\nend run'
+            subprocess.run(["osascript", "-e", script, shlex.join(terminal_command)], check=True, capture_output=True, timeout=15)
+        elif sys.platform.startswith("linux"):
+            terminal = None
+            for name, options in [("x-terminal-emulator", ["-e"]), ("gnome-terminal", ["--"]), ("konsole", ["-e"]), ("xterm", ["-e"])]:
+                executable = shutil.which(name)
+                if executable:
+                    terminal = [executable, *options]
+                    break
+            if terminal is None or not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+                die(fallback)
+            subprocess.Popen([*terminal, "env", "XDG_CONFIG_HOME=" + str(credentials_path().parents[1]), *command], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        else:
+            die(fallback)
+    except (OSError, subprocess.SubprocessError):
+        die(fallback)
+    print("Setup launched in your terminal. Sign in and paste the token into its hidden prompt.")
+    print("After saving, the agent can run auth-status and continue. No token is needed in chat.")
+
+
+def cmd_setup(args: argparse.Namespace) -> None:
+    if getattr(args, "launch", False):
+        launch_setup(args.no_browser)
+        return
+    if not sys.stdin.isatty():
+        die("Run setup in an interactive terminal; never send your token through agent chat.")
+    url = DEFAULT_BASE_URL + "/dashboard/api-token"
+    print(f"Sign in and copy your API token: {url}")
+    if not args.no_browser:
+        try:
+            if not webbrowser.open(url):
+                print("Open the link above in your browser to continue.")
+        except webbrowser.Error:
+            print("Open the link above in your browser to continue.")
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", getpass.GetPassWarning)
+            token = getpass.getpass("Paste your SearchVector API token (hidden): ").strip()
+    except (EOFError, KeyboardInterrupt, getpass.GetPassWarning):
+        die("Setup cancelled or hidden input unavailable; no credentials changed.")
+    if not token or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in token):
+        die("Enter a non-empty token without whitespace or control characters; no credentials changed.")
+    path = credentials_path()
+    temporary = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        path.parent.chmod(0o700)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as handle:
+            temporary = Path(handle.name)
+            os.chmod(temporary, 0o600)
+            json.dump({"api_token": token}, handle)
+            handle.write("\n")
+        os.replace(temporary, path)
+    except OSError:
+        die("Could not save credentials. Check your user configuration directory permissions and retry setup.")
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    print(f"Token saved to {path}. API calls now load it automatically.")
+    if os.environ.get("SEARCHVECTOR_API_TOKEN") or os.environ.get("SEARCHVECTOR_JWT"):
+        print("An existing environment credential takes precedence over the saved token.")
+
+
 def auth_headers() -> dict[str, str]:
     token = os.environ.get("SEARCHVECTOR_API_TOKEN")
     jwt = os.environ.get("SEARCHVECTOR_JWT")
     if not token and not jwt:
-        die("missing SEARCHVECTOR_API_TOKEN or SEARCHVECTOR_JWT. Configure auth in the environment before calling APIs.")
+        path = credentials_path()
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            token = saved.get("api_token") if isinstance(saved, dict) else None
+            if not isinstance(token, str) or not token or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in token):
+                raise ValueError("invalid token")
+        except FileNotFoundError:
+            die("Missing credentials. Run python scripts/sv_api.py setup in your terminal, or set SEARCHVECTOR_API_TOKEN / SEARCHVECTOR_JWT.")
+        except (OSError, ValueError, UnicodeError):
+            die("Cannot read saved credentials. Run python scripts/sv_api.py setup to configure your token again.")
     return {"Authorization": f"Token {token}" if token else f"Bearer {jwt}"}
+
+
+def cmd_auth_status(args: argparse.Namespace) -> None:
+    auth_headers()
+    print("SearchVector credentials are configured (API access has not been checked).")
 
 
 def cmd_call(args: argparse.Namespace) -> None:
@@ -322,6 +417,14 @@ def main() -> None:
     parser.set_defaults(schema_url=os.environ.get("SEARCHVECTOR_SCHEMA_URL", DEFAULT_SCHEMA_URL), refresh=False)
     add_common_options(parser)
     sub = parser.add_subparsers(dest="command", required=True)
+
+    setup = sub.add_parser("setup", help="open the token page and securely save your API token locally")
+    setup.add_argument("--no-browser", action="store_true", help="show the token page link without opening a browser")
+    setup.add_argument("--launch", action="store_true", help="open setup in a user-facing terminal for private token entry")
+    setup.set_defaults(func=cmd_setup)
+
+    auth_status = sub.add_parser("auth-status", help="check whether credentials are configured without displaying them or calling the API")
+    auth_status.set_defaults(func=cmd_auth_status)
 
     search = sub.add_parser("search", help="search OpenAPI operations")
     add_common_options(search)

@@ -61,14 +61,16 @@ Three schemes (an endpoint's `Auth:` line shows which it accepts):
 
 For server-side integrations and scripts, use Token auth; for user-facing flows, JWT.
 
-**Making requests — use the bundled client, not raw curl**: `scripts/sv_api.py call` reads `SEARCHVECTOR_API_TOKEN` (or `SEARCHVECTOR_JWT`) from the environment, attaches the right Authorization header, and never prints the credential — so it can't leak into shell history or transcripts:
+**Making requests — use the bundled client, not raw curl**: `scripts/sv_api.py call` reads `SEARCHVECTOR_API_TOKEN` (or `SEARCHVECTOR_JWT`) from the environment, falling back to the token saved by `scripts/sv_api.py setup`, attaches the right Authorization header, and never prints the credential — so it can't leak into shell history or transcripts:
 
 ```bash
 python scripts/sv_api.py call GET /api/projects/ --query search=nike
 python scripts/sv_api.py call POST /api/projects/ --json '{"name":"My Site","website_url":"https://example.com"}'
 ```
 
-If it reports the env var is unset, tell the user to `export SEARCHVECTOR_API_TOKEN=...` (in `~/.zshrc` or a gitignored `.env`) — never ask them to paste the key into chat, hardcode it, or pass it on a command line. When writing integration code for the user, read the token from that same env variable.
+Before the first authenticated task, run `python scripts/sv_api.py auth-status` from the installed skill folder. This checks local configuration without displaying credentials or making an API request. If credentials are missing, initiate setup yourself with `python scripts/sv_api.py setup --launch`; do not ask the user to type the setup command. It opens a user-facing terminal on macOS or desktop Linux, where setup opens `https://searchvector.io/dashboard/api-token` and accepts the token through a hidden prompt. Tell the user to sign in, copy their token, and paste it only into that terminal. Never collect the token through chat or an agent tool session, including a tool session with a pseudo-terminal.
+
+After the user finishes setup, run `auth-status` again and continue the original task once configured. Do not relaunch setup repeatedly or treat launch success as completed authentication. If launching fails, show the reported manual fallback command. Headless/remote sessions and unsupported platforms may require running setup manually on the same machine as the agent; do not claim the user's local browser or terminal opened in these cases. API credentials are saved to `~/.config/searchvector/credentials.json` (or `$XDG_CONFIG_HOME/searchvector/credentials.json`) with owner-only permissions. Environment credentials override the saved token. Installation via `npx skills add` does not execute setup automatically; the agent initiates it when needed. See [README.md](README.md#set-up-your-api-token) for details and optional shell configuration. When writing integration code, read credentials from an environment variable rather than copying the saved token into code.
 
 ## Conventions
 
